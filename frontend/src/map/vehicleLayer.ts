@@ -1,0 +1,73 @@
+import type maplibregl from "maplibre-gl";
+import type { GeoJSONSource } from "maplibre-gl";
+import type { Vehicle } from "../types/vehicle";
+
+export const VEHICLE_SOURCE_ID = "vehicles";
+export const VEHICLE_LAYER_ID = "vehicles-layer";
+export const VEHICLE_LABEL_LAYER_ID = "vehicles-labels";
+
+const EMPTY: GeoJSON.FeatureCollection = {
+  type: "FeatureCollection",
+  features: [],
+};
+
+const MODE_FALLBACK_COLOR = "#4a90d9";
+
+export function addVehicleLayers(map: maplibregl.Map): void {
+  map.addSource(VEHICLE_SOURCE_ID, { type: "geojson", data: EMPTY });
+
+  map.addLayer({
+    id: VEHICLE_LAYER_ID,
+    type: "circle",
+    source: VEHICLE_SOURCE_ID,
+    paint: {
+      "circle-radius": [
+        "interpolate",
+        ["linear"],
+        ["zoom"],
+        10, 4,
+        14, 8,
+        17, 12,
+      ],
+      "circle-color": ["coalesce", ["get", "bg_color"], MODE_FALLBACK_COLOR],
+      "circle-stroke-width": 1.5,
+      "circle-stroke-color": "rgba(255, 255, 255, 0.55)",
+    },
+  });
+
+  map.addLayer({
+    id: VEHICLE_LABEL_LAYER_ID,
+    type: "symbol",
+    source: VEHICLE_SOURCE_ID,
+    minzoom: 12,
+    layout: {
+      "text-field": ["get", "line"],
+      "text-size": ["interpolate", ["linear"], ["zoom"], 12, 8, 17, 12],
+      "text-allow-overlap": true,
+      "text-font": ["Noto Sans Bold"],
+    },
+    paint: {
+      "text-color": ["coalesce", ["get", "fg_color"], "#ffffff"],
+    },
+  });
+}
+
+export function updateVehicles(map: maplibregl.Map, vehicles: Vehicle[]): void {
+  const source = map.getSource<GeoJSONSource>(VEHICLE_SOURCE_ID);
+  if (!source) return;
+  source.setData({
+    type: "FeatureCollection",
+    features: vehicles.map((v) => ({
+      type: "Feature",
+      geometry: { type: "Point", coordinates: [v.lon, v.lat] },
+      properties: {
+        id: v.id,
+        line: v.line,
+        mode: v.mode,
+        destination: v.destination,
+        bg_color: v.bg_color,
+        fg_color: v.fg_color,
+      },
+    })),
+  });
+}
