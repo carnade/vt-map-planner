@@ -16,7 +16,7 @@ RAW_POSITION = {
     "longitude": 11.97,
     "direction": "Angered",
     "line": {
-        "designation": "6",
+        "name": "6",
         "transportMode": "tram",
         "backgroundColor": "#00394d",
         "foregroundColor": "#ffffff",

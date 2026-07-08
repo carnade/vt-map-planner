@@ -53,5 +53,7 @@ so no CORS configuration is needed in dev.
   realtime data), not raw GPS — same caveat as SL Live Map.
 - Buses only appear past a zoom threshold to keep the map readable; trams, trains
   and ferries are always shown.
+- The UI must stay responsive — everything is built to work on both mobile and
+  desktop (touch gestures, safe-area insets, dynamic viewport height).
 
 See [FUTURE_IMPROVEMENTS.md](FUTURE_IMPROVEMENTS.md) for the roadmap.

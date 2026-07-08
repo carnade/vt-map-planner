@@ -30,7 +30,7 @@ def shape_position(raw: dict) -> VehiclePosition | None:
         return None
     return VehiclePosition(
         id=ref,
-        line=line.get("designation") or line.get("name") or "?",
+        line=line.get("name") or "?",
         mode=(line.get("transportMode") or "unknown").lower(),
         lat=lat,
         lon=lon,
