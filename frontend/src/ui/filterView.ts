@@ -1,9 +1,11 @@
 import {
   ALL_MODES,
   getSeenLines,
+  isHideBusesOnZoomOut,
   isLineEnabled,
   isModeEnabled,
   setAllLinesEnabled,
+  setHideBusesOnZoomOut,
   setLineEnabled,
   setModeEnabled,
   subscribe,
@@ -62,13 +64,23 @@ export function createFilterView(): PanelView {
   el.className = "filter-view";
 
   function render(): void {
-    el.innerHTML = ALL_MODES.map(renderGroup).join("");
+    el.innerHTML =
+      ALL_MODES.map(renderGroup).join("") +
+      `<div class="filter-settings">
+        <label class="filter-mode-label">
+          <input type="checkbox" class="filter-zoom-toggle"
+            ${isHideBusesOnZoomOut() ? "checked" : ""}>
+          <span>Dölj bussar vid utzoomning</span>
+        </label>
+      </div>`;
   }
 
   el.addEventListener("change", (e) => {
     const target = e.target as HTMLInputElement;
     if (target.matches(".filter-mode-toggle")) {
       setModeEnabled(target.dataset.mode as Mode, target.checked);
+    } else if (target.matches(".filter-zoom-toggle")) {
+      setHideBusesOnZoomOut(target.checked);
     }
   });
   el.addEventListener("click", (e) => {

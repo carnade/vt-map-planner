@@ -25,6 +25,7 @@ const enabledModes: Record<Mode, boolean> = {
 };
 // Disabled (not enabled) lines are stored so newly seen lines default to visible
 const disabledLines = new Set<string>();
+let hideBusesOnZoomOut = false;
 const seenLines = new Map<string, SeenLine>();
 const listeners = new Set<Listener>();
 const filterListeners = new Set<Listener>();
@@ -41,7 +42,11 @@ function persist(): void {
   try {
     localStorage.setItem(
       FILTERS_KEY,
-      JSON.stringify({ enabledModes, disabledLines: [...disabledLines] }),
+      JSON.stringify({
+        enabledModes,
+        disabledLines: [...disabledLines],
+        hideBusesOnZoomOut,
+      }),
     );
     localStorage.setItem(SEEN_LINES_KEY, JSON.stringify([...seenLines.values()]));
   } catch {
@@ -63,6 +68,9 @@ function restore(): void {
       for (const key of filters.disabledLines) {
         if (typeof key === "string") disabledLines.add(key);
       }
+    }
+    if (typeof filters?.hideBusesOnZoomOut === "boolean") {
+      hideBusesOnZoomOut = filters.hideBusesOnZoomOut;
     }
     const seen = JSON.parse(localStorage.getItem(SEEN_LINES_KEY) ?? "null");
     if (Array.isArray(seen)) {
@@ -109,6 +117,16 @@ export function isModeEnabled(mode: Mode): boolean {
 export function setModeEnabled(mode: Mode, on: boolean): void {
   if (enabledModes[mode] === on) return;
   enabledModes[mode] = on;
+  notify(true);
+}
+
+export function isHideBusesOnZoomOut(): boolean {
+  return hideBusesOnZoomOut;
+}
+
+export function setHideBusesOnZoomOut(on: boolean): void {
+  if (hideBusesOnZoomOut === on) return;
+  hideBusesOnZoomOut = on;
   notify(true);
 }
 

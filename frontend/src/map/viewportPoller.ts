@@ -1,12 +1,14 @@
 import type maplibregl from "maplibre-gl";
 import { fetchPositions, type Bbox } from "../api/positions";
-import { BUS_MIN_ZOOM, POLL_INTERVAL_MS } from "../config";
+import { BUS_MIN_ZOOM, POLL_INTERVAL_MS, VEHICLE_CAP } from "../config";
 import {
   getEnabledModes,
+  isHideBusesOnZoomOut,
   recordSeen,
   subscribeFilters,
   vehiclePassesFilter,
 } from "../state/filterState";
+import { setCapWarningVisible } from "../ui/capWarning";
 import type { VehicleAnimator } from "./vehicleAnimator";
 
 // Fetch slightly beyond the viewport so vehicles don't pop in at the edges
@@ -39,10 +41,12 @@ export function startPolling(
     const controller = new AbortController();
     inFlight = controller;
     const requestId = ++requestCounter;
-    const includeBuses = map.getZoom() >= BUS_MIN_ZOOM;
+    const includeBuses =
+      !isHideBusesOnZoomOut() || map.getZoom() >= BUS_MIN_ZOOM;
     const modes = getEnabledModes().filter((m) => m !== "bus" || includeBuses);
     if (modes.length === 0) {
       animator.removeWhere(() => true);
+      setCapWarningVisible(false);
       return;
     }
     try {
@@ -61,6 +65,8 @@ export function startPolling(
         // panel can list them), but only animate the ones passing the filter
         recordSeen(vehicles);
         animator.ingest(vehicles.filter(vehiclePassesFilter));
+        // At the API's response cap some vehicles in view are missing
+        setCapWarningVisible(vehicles.length >= VEHICLE_CAP);
       }
     } catch (err) {
       if (!(err instanceof DOMException && err.name === "AbortError")) {

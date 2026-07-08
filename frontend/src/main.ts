@@ -7,6 +7,7 @@ import { addStopLayers, loadStops } from "./map/stopLayer";
 import { VehicleAnimator } from "./map/vehicleAnimator";
 import { addVehicleLayers } from "./map/vehicleLayer";
 import { startPolling } from "./map/viewportPoller";
+import { removeCapWarning } from "./ui/capWarning";
 import { createDeparturesView } from "./ui/departuresView";
 import { createFilterView } from "./ui/filterView";
 import { Panel } from "./ui/panel";
@@ -38,6 +39,7 @@ map.on("load", () => {
     import.meta.hot.dispose(() => {
       stopPolling();
       panel.destroy();
+      removeCapWarning();
       map.remove();
     });
   }
