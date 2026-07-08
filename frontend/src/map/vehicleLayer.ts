@@ -1,6 +1,4 @@
 import type maplibregl from "maplibre-gl";
-import type { GeoJSONSource } from "maplibre-gl";
-import type { Vehicle } from "../types/vehicle";
 
 export const VEHICLE_SOURCE_ID = "vehicles";
 export const VEHICLE_LAYER_ID = "vehicles-layer";
@@ -49,25 +47,5 @@ export function addVehicleLayers(map: maplibregl.Map): void {
     paint: {
       "text-color": ["coalesce", ["get", "fg_color"], "#ffffff"],
     },
-  });
-}
-
-export function updateVehicles(map: maplibregl.Map, vehicles: Vehicle[]): void {
-  const source = map.getSource<GeoJSONSource>(VEHICLE_SOURCE_ID);
-  if (!source) return;
-  source.setData({
-    type: "FeatureCollection",
-    features: vehicles.map((v) => ({
-      type: "Feature",
-      geometry: { type: "Point", coordinates: [v.lon, v.lat] },
-      properties: {
-        id: v.id,
-        line: v.line,
-        mode: v.mode,
-        destination: v.destination,
-        bg_color: v.bg_color,
-        fg_color: v.fg_color,
-      },
-    })),
   });
 }

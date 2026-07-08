@@ -35,9 +35,10 @@ stop/line browsing UI exists.
 
 ## Nicer vehicle rendering
 
-- Direction-aware icons (chevrons rotated by bearing) instead of plain circles
-- Smooth interpolation between polls so vehicles glide instead of jumping
-- Line-colored markers using Västtrafik's official line colors from the API
+- Direction-aware icons (chevrons rotated by movement vector) instead of plain
+  circles — the animator already computes a per-vehicle velocity that could
+  drive icon rotation
+- Snap positions to the street/track network instead of straight-line glides
 
 ## Deployment
 

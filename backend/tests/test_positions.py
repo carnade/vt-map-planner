@@ -14,7 +14,7 @@ RAW_POSITION = {
     "detailsReference": "abc123",
     "latitude": 57.7,
     "longitude": 11.97,
-    "direction": "Angered",
+    "direction": "Angered, Påstigning fram",
     "line": {
         "name": "6",
         "transportMode": "tram",

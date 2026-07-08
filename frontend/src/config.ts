@@ -6,7 +6,9 @@ export const MAP_STYLE_URL = "https://tiles.openfreemap.org/styles/dark";
 export const INITIAL_CENTER: [number, number] = [11.9746, 57.7089]; // Gothenburg
 export const INITIAL_ZOOM = 13;
 
-export const POLL_INTERVAL_MS = 2000;
+// Dead-reckoning animation glides vehicles between reports, so polling can
+// be sparser than the visual update rate
+export const POLL_INTERVAL_MS = 4000;
 
 // Buses are only fetched/shown at or above this zoom (mirrors sl-map's
 // approach: trams/trains/ferries always visible, buses when zoomed in)

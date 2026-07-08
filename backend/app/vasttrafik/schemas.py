@@ -1,4 +1,10 @@
+import re
+
 from pydantic import BaseModel
+
+# Västtrafik appends boarding notes to the direction, e.g.
+# "Arendal, Påstigning fram" — strip them from the destination label
+_BOARDING_NOTE = re.compile(r",\s*Påstigning.*$", re.IGNORECASE)
 
 
 class VehiclePosition(BaseModel):
@@ -28,13 +34,16 @@ def shape_position(raw: dict) -> VehiclePosition | None:
     ref = raw.get("detailsReference")
     if lat is None or lon is None or ref is None:
         return None
+    direction = raw.get("direction")
+    if direction:
+        direction = _BOARDING_NOTE.sub("", direction).strip()
     return VehiclePosition(
         id=ref,
         line=line.get("name") or "?",
         mode=(line.get("transportMode") or "unknown").lower(),
         lat=lat,
         lon=lon,
-        destination=raw.get("direction"),
+        destination=direction,
         bg_color=line.get("backgroundColor"),
         fg_color=line.get("foregroundColor"),
     )
