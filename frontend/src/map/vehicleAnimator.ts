@@ -74,10 +74,10 @@ export class VehicleAnimator {
     }
   }
 
-  /** Immediately drop all vehicles of a mode (e.g. buses after zooming out) */
-  removeMode(mode: string): void {
+  /** Immediately drop vehicles matching the predicate (zoom-outs, filter changes) */
+  removeWhere(pred: (v: Vehicle) => boolean): void {
     for (const [id, av] of this.vehicles) {
-      if (av.vehicle.mode === mode) this.vehicles.delete(id);
+      if (pred(av.vehicle)) this.vehicles.delete(id);
     }
   }
 

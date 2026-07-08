@@ -1,20 +1,15 @@
 import maplibregl from "maplibre-gl";
 import type { MapGeoJSONFeature } from "maplibre-gl";
+import { escapeHtml, MODE_LABELS } from "../ui/html";
+import { STOP_LAYER_ID } from "./stopLayer";
 import { VEHICLE_LAYER_ID } from "./vehicleLayer";
 
-const MODE_LABELS: Record<string, string> = {
-  tram: "Spårvagn",
-  bus: "Buss",
-  train: "Tåg",
-  ferry: "Färja",
-  taxi: "Taxi",
-};
-
-// Extra pixels around a tap so vehicles are easy to hit with a finger
+// Extra pixels around a tap so vehicles/stops are easy to hit with a finger
 const TAP_TOLERANCE_PX = 12;
 
-function escapeHtml(value: string): string {
-  return value.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+export interface StopClick {
+  gid: string;
+  name: string;
 }
 
 function renderPopup(feature: MapGeoJSONFeature): string {
@@ -37,36 +32,52 @@ function renderPopup(feature: MapGeoJSONFeature): string {
     </div>`;
 }
 
-export function attachVehicleClickHandler(map: maplibregl.Map): void {
+export function attachMapClickHandlers(
+  map: maplibregl.Map,
+  onStopClick: (stop: StopClick) => void,
+): void {
   let popup: maplibregl.Popup | null = null;
 
   map.on("click", (e) => {
-    const features = map.queryRenderedFeatures(
-      [
-        [e.point.x - TAP_TOLERANCE_PX, e.point.y - TAP_TOLERANCE_PX],
-        [e.point.x + TAP_TOLERANCE_PX, e.point.y + TAP_TOLERANCE_PX],
-      ],
-      { layers: [VEHICLE_LAYER_ID] },
-    );
+    const bbox: [maplibregl.PointLike, maplibregl.PointLike] = [
+      [e.point.x - TAP_TOLERANCE_PX, e.point.y - TAP_TOLERANCE_PX],
+      [e.point.x + TAP_TOLERANCE_PX, e.point.y + TAP_TOLERANCE_PX],
+    ];
     popup?.remove();
     popup = null;
-    const feature = features[0];
-    if (!feature || feature.geometry.type !== "Point") return;
-    const [lon, lat] = feature.geometry.coordinates;
-    popup = new maplibregl.Popup({
-      closeButton: false,
-      offset: 14,
-      maxWidth: "260px",
-    })
-      .setLngLat([lon, lat])
-      .setHTML(renderPopup(feature))
-      .addTo(map);
+
+    // Vehicles render on top of stops, so they win ties
+    const vehicles = map.queryRenderedFeatures(bbox, {
+      layers: [VEHICLE_LAYER_ID],
+    });
+    const vehicle = vehicles[0];
+    if (vehicle && vehicle.geometry.type === "Point") {
+      const [lon, lat] = vehicle.geometry.coordinates;
+      popup = new maplibregl.Popup({
+        closeButton: false,
+        offset: 14,
+        maxWidth: "260px",
+      })
+        .setLngLat([lon, lat])
+        .setHTML(renderPopup(vehicle))
+        .addTo(map);
+      return;
+    }
+
+    const stops = map.queryRenderedFeatures(bbox, { layers: [STOP_LAYER_ID] });
+    const stop = stops[0];
+    if (stop) {
+      const { gid, name } = stop.properties as { gid: string; name: string };
+      onStopClick({ gid, name });
+    }
   });
 
-  map.on("mouseenter", VEHICLE_LAYER_ID, () => {
-    map.getCanvas().style.cursor = "pointer";
-  });
-  map.on("mouseleave", VEHICLE_LAYER_ID, () => {
-    map.getCanvas().style.cursor = "";
-  });
+  for (const layer of [VEHICLE_LAYER_ID, STOP_LAYER_ID]) {
+    map.on("mouseenter", layer, () => {
+      map.getCanvas().style.cursor = "pointer";
+    });
+    map.on("mouseleave", layer, () => {
+      map.getCanvas().style.cursor = "";
+    });
+  }
 }

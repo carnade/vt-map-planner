@@ -1,6 +1,12 @@
 import type maplibregl from "maplibre-gl";
 import { fetchPositions, type Bbox } from "../api/positions";
 import { BUS_MIN_ZOOM, POLL_INTERVAL_MS } from "../config";
+import {
+  getEnabledModes,
+  recordSeen,
+  subscribeFilters,
+  vehiclePassesFilter,
+} from "../state/filterState";
 import type { VehicleAnimator } from "./vehicleAnimator";
 
 // Fetch slightly beyond the viewport so vehicles don't pop in at the edges
@@ -34,17 +40,27 @@ export function startPolling(
     inFlight = controller;
     const requestId = ++requestCounter;
     const includeBuses = map.getZoom() >= BUS_MIN_ZOOM;
+    const modes = getEnabledModes().filter((m) => m !== "bus" || includeBuses);
+    if (modes.length === 0) {
+      animator.removeWhere(() => true);
+      return;
+    }
     try {
       const vehicles = await fetchPositions(
         currentBbox(map),
-        includeBuses,
+        modes,
         controller.signal,
       );
       // Ignore stale responses that finished after a newer request
       if (requestId === requestCounter) {
-        if (busesShown && !includeBuses) animator.removeMode("bus");
+        if (busesShown && !includeBuses) {
+          animator.removeWhere((v) => v.mode === "bus");
+        }
         busesShown = includeBuses;
-        animator.ingest(vehicles);
+        // Record every line we've seen (even filtered ones, so the filter
+        // panel can list them), but only animate the ones passing the filter
+        recordSeen(vehicles);
+        animator.ingest(vehicles.filter(vehiclePassesFilter));
       }
     } catch (err) {
       if (!(err instanceof DOMException && err.name === "AbortError")) {
@@ -67,6 +83,13 @@ export function startPolling(
   };
   document.addEventListener("visibilitychange", onVisibility);
 
+  // Filter changes take effect immediately: purge newly hidden vehicles
+  // and refetch (mode set may have grown)
+  const unsubscribeFilters = subscribeFilters(() => {
+    animator.removeWhere((v) => !vehiclePassesFilter(v));
+    void refresh();
+  });
+
   animator.start();
   void refresh();
 
@@ -74,6 +97,7 @@ export function startPolling(
     clearInterval(interval);
     map.off("moveend", onMoveEnd);
     document.removeEventListener("visibilitychange", onVisibility);
+    unsubscribeFilters();
     animator.stop();
     inFlight?.abort();
   };

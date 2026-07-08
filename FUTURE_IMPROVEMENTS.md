@@ -11,27 +11,29 @@ free, keyless, no rate limits. If the dark style or reliability proves insuffici
 style gallery (including several dark variants) but requires an API key and has a
 capped free tier.
 
-## Departure boards for a stop
-
-Click a stop (or search for one) and see upcoming departures with realtime delays.
-
-- `GET /v4/locations/by-text` and `/v4/locations/by-coordinates` for stop search
-- `GET /v4/stop-areas/{stopAreaGid}/departures` for the board itself
-
-## Trip / journey planner
+## Trip / journey planner (next milestone — UX decided with user)
 
 Origin → destination search with realtime-aware suggestions.
 
 - `GET /v4/journeys` and `GET /v4/journeys/{detailsReference}/details`
+- `GET /v4/locations/by-text` / `by-coordinates` for origin/destination search
 
-> **Needs design discussion before implementation** — the UX for this should be
-> worked out together (input fields vs. map picking, how results are shown, etc.)
-> rather than assumed.
+Agreed UX (2026-07-08):
+
+- **Input**: text search with autocomplete AND map picking (tap a stop or
+  long-press the map for "from here" / "to here").
+- **Results**: journey alternatives list (departure/arrival, duration, changes,
+  realtime delays); selecting one draws the route on the map with line colors.
+- **Focus mode**: while a route is active, only vehicles relevant to the trip
+  are shown — the positions API supports `lineDesignations` filtering for this.
+- The planner becomes another view pushed onto the existing panel stack
+  (`frontend/src/ui/panel.ts`).
 
 ## Favorites / saved stops or lines
 
-Client-side `localStorage` only — no accounts, no database. Small addition once
-stop/line browsing UI exists.
+Client-side `localStorage` only — no accounts, no database. Natural fit now that
+stops and the filter panel exist: a star on the departure board header and/or on
+line chips, plus a favorites section at the top of the filter view.
 
 ## Nicer vehicle rendering
 

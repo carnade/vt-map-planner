@@ -7,9 +7,11 @@ export interface Bbox {
   maxLon: number;
 }
 
+export const ALL_TRANSPORT_MODES = ["tram", "bus", "ferry", "train", "taxi"];
+
 export async function fetchPositions(
   bbox: Bbox,
-  includeBuses: boolean,
+  modes: string[],
   signal?: AbortSignal,
 ): Promise<Vehicle[]> {
   const params = new URLSearchParams({
@@ -18,8 +20,8 @@ export async function fetchPositions(
     max_lat: bbox.maxLat.toFixed(5),
     max_lon: bbox.maxLon.toFixed(5),
   });
-  if (!includeBuses) {
-    params.set("modes", "tram,train,ferry");
+  if (modes.length < ALL_TRANSPORT_MODES.length) {
+    params.set("modes", modes.join(","));
   }
   const response = await fetch(`/api/positions?${params}`, { signal });
   if (!response.ok) {
