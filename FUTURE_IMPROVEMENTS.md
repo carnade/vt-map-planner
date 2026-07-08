@@ -46,3 +46,26 @@ line chips, plus a favorites section at the top of the filter view.
 
 Currently local dev only. Future: pick a host (VPS / Fly.io / Render), HTTPS,
 secrets management, reverse proxy serving the built frontend and `/api` together.
+
+### Scaling the Västtrafik API usage (required before public deployment)
+
+Today the backend proxies per client viewport: positions calls scale with the
+number of *unique viewports* (2 s bbox cache dedupes identical views, but 100
+users in 100 different areas ≈ 100 distinct upstream calls per poll cycle).
+Fine for localhost; not for real users.
+
+The fix is to invert the model:
+
+- **Region-wide fetch loop**: the backend fetches all vehicles for the whole
+  Gothenburg region on a fixed interval (tiled into several bounding boxes,
+  since `/positions` caps at 200 vehicles per call) and keeps an in-memory
+  snapshot. Client requests are served from the snapshot — upstream traffic
+  becomes constant (~10–20 calls/interval) regardless of client count. This is
+  almost certainly how sl-map.gunnar.se works.
+- **Push instead of poll**: WebSocket/SSE from backend to clients, so frontend
+  request volume stops scaling with users too.
+- Departures could get the same treatment for hot stops if needed, but the
+  per-gid 10 s cache already collapses crowds on the same stop to one call.
+
+Also: **check the subscription's rate-limit tier** in the Västtrafik developer
+portal (not publicly documented) before any public launch.
