@@ -12,6 +12,8 @@ class Settings(BaseSettings):
     vasttrafik_api_base_url: str = "https://ext-api.vasttrafik.se/pr/v4"
     cors_origins: str = "http://localhost:5173"
     positions_cache_ttl_seconds: float = 2.0
+    stops_cache_ttl_seconds: float = 86400.0
+    departures_cache_ttl_seconds: float = 10.0
 
     @property
     def cors_origin_list(self) -> list[str]:

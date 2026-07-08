@@ -34,6 +34,20 @@ class VasttrafikClient:
         response = await self._request("GET", "/positions", params=params)
         return response.json()
 
+    async def get_stop_areas(self) -> list[dict]:
+        response = await self._request("GET", "/stop-areas")
+        return response.json()
+
+    async def get_departures(
+        self, stop_area_gid: str, limit: int = 30, time_span_minutes: int = 60
+    ) -> dict:
+        response = await self._request(
+            "GET",
+            f"/stop-areas/{stop_area_gid}/departures",
+            params={"limit": limit, "timeSpanInMinutes": time_span_minutes},
+        )
+        return response.json()
+
     async def _request(self, method: str, path: str, **kwargs) -> httpx.Response:
         url = f"{self._base_url}{path}"
         token = await self._tokens.get_token()
