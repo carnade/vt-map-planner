@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 
 from .config import get_settings
-from .routers import positions, stops
+from .routers import journeys, positions, stops
 from .vasttrafik.auth import TokenManager
 from .vasttrafik.client import VasttrafikClient
 
@@ -42,6 +42,7 @@ app.add_middleware(GZipMiddleware, minimum_size=1024)
 
 app.include_router(positions.router, prefix="/api")
 app.include_router(stops.router, prefix="/api")
+app.include_router(journeys.router, prefix="/api")
 
 
 @app.get("/api/health")

@@ -48,6 +48,36 @@ class VasttrafikClient:
         )
         return response.json()
 
+    async def get_locations_by_text(self, query: str, limit: int = 10) -> dict:
+        response = await self._request(
+            "GET",
+            "/locations/by-text",
+            params={"q": query, "limit": limit, "types": ["stoparea"]},
+        )
+        return response.json()
+
+    async def get_journeys(
+        self, origin_gid: str, destination_gid: str, limit: int = 6
+    ) -> dict:
+        response = await self._request(
+            "GET",
+            "/journeys",
+            params={
+                "originGid": origin_gid,
+                "destinationGid": destination_gid,
+                "limit": limit,
+            },
+        )
+        return response.json()
+
+    async def get_journey_details(self, details_reference: str) -> dict:
+        response = await self._request(
+            "GET",
+            f"/journeys/{details_reference}/details",
+            params={"includes": ["servicejourneycoordinates"]},
+        )
+        return response.json()
+
     async def _request(self, method: str, path: str, **kwargs) -> httpx.Response:
         url = f"{self._base_url}{path}"
         token = await self._tokens.get_token()
