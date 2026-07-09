@@ -624,6 +624,31 @@ input.switch:checked::after {
 
 /* ---------- Departure board ---------- */
 
+.dep-platform-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 2px 0 10px;
+  border-bottom: 1px solid #2a2e37;
+}
+
+.dep-pill {
+  background: #23262e;
+  border: 1px solid #2a2e37;
+  color: #6b7075;
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  min-height: 30px;
+}
+
+.dep-pill-active {
+  background: #253044;
+  border-color: #4a90d9;
+  color: #e8eaed;
+}
+
 .dep-row {
   display: flex;
   align-items: center;

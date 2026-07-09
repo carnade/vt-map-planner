@@ -80,13 +80,72 @@ export function createDeparturesView(stop: {
   let renderInterval: number | null = null;
   let inFlight: AbortController | null = null;
   let hasData = false;
+  // Platforms (lägen) selected in the pill filter; null = show all
+  let selectedPlatforms: Set<string> | null = null;
+
+  function platformsPresent(): string[] {
+    const platforms = new Set<string>();
+    for (const dep of departures) {
+      if (dep.platform) platforms.add(dep.platform);
+    }
+    return [...platforms].sort((a, b) =>
+      a.localeCompare(b, "sv", { numeric: true }),
+    );
+  }
+
+  function renderPlatformPills(): string {
+    const platforms = platformsPresent();
+    if (platforms.length < 2) return "";
+    const pills = platforms
+      .map(
+        (p) => `<button class="dep-pill ${
+          selectedPlatforms === null || selectedPlatforms.has(p) ? "dep-pill-active" : ""
+        }" data-platform="${escapeHtml(p)}">${escapeHtml(p)}</button>`,
+      )
+      .join("");
+    return `<div class="dep-platform-pills">
+      <button class="dep-pill dep-pill-all ${selectedPlatforms === null ? "dep-pill-active" : ""}"
+        data-platform="__all__">Alla lägen</button>${pills}</div>`;
+  }
+
+  function visibleDepartures(): Departure[] {
+    if (selectedPlatforms === null) return departures;
+    return departures.filter(
+      (dep) => dep.platform !== null && selectedPlatforms!.has(dep.platform),
+    );
+  }
 
   function render(stale = false): void {
     el.innerHTML = `
       ${stale ? `<div class="dep-stale">Kunde inte uppdatera — visar senast kända</div>` : ""}
-      ${renderRows(departures)}
+      ${renderPlatformPills()}
+      ${renderRows(visibleDepartures())}
       <div class="dep-caveat">Uppdateras var 30:e sekund</div>`;
   }
+
+  el.addEventListener("click", (e) => {
+    const pill = (e.target as HTMLElement).closest<HTMLElement>(".dep-pill");
+    if (!pill) return;
+    const platform = pill.dataset.platform!;
+    const all = platformsPresent();
+    if (platform === "__all__") {
+      selectedPlatforms = null;
+    } else if (selectedPlatforms === null) {
+      // From "all shown", narrowing to just the tapped läge feels natural
+      selectedPlatforms = new Set([platform]);
+    } else {
+      if (selectedPlatforms.has(platform)) {
+        selectedPlatforms.delete(platform);
+      } else {
+        selectedPlatforms.add(platform);
+      }
+      // Everything (or nothing) selected is the same as no filter
+      if (selectedPlatforms.size === 0 || selectedPlatforms.size === all.length) {
+        selectedPlatforms = null;
+      }
+    }
+    render();
+  });
 
   async function refresh(): Promise<void> {
     if (document.hidden) return;
