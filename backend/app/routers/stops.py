@@ -1,8 +1,11 @@
 import asyncio
 import time
 
-from fastapi import APIRouter, HTTPException, Path, Request
+from fastapi import APIRouter, Depends, HTTPException, Path
 
+from ..config import get_settings
+from ..deps import get_vasttrafik
+from ..vasttrafik.client import VasttrafikClient
 from ..vasttrafik.schemas import (
     DeparturesResponse,
     StopsResponse,
@@ -20,9 +23,9 @@ _departures_lock = asyncio.Lock()
 
 
 @router.get("/stops", response_model=StopsResponse)
-async def get_stops(request: Request):
+async def get_stops(vasttrafik: VasttrafikClient = Depends(get_vasttrafik)):
     global _stops_cache
-    settings = request.app.state.settings
+    settings = get_settings()
     now = time.monotonic()
 
     if _stops_cache and now - _stops_cache[0] < settings.stops_cache_ttl_seconds:
@@ -32,7 +35,7 @@ async def get_stops(request: Request):
         if _stops_cache and now - _stops_cache[0] < settings.stops_cache_ttl_seconds:
             return _stops_cache[1]
         try:
-            raw = await request.app.state.vasttrafik.get_stop_areas()
+            raw = await vasttrafik.get_stop_areas()
         except Exception:
             # Stop data changes rarely: serve a stale copy over failing hard
             if _stops_cache:
@@ -46,10 +49,10 @@ async def get_stops(request: Request):
 
 @router.get("/stops/{gid}/departures", response_model=DeparturesResponse)
 async def get_departures(
-    request: Request,
     gid: str = Path(pattern=r"^\d{4,20}$"),
+    vasttrafik: VasttrafikClient = Depends(get_vasttrafik),
 ):
-    settings = request.app.state.settings
+    settings = get_settings()
     now = time.monotonic()
 
     cached = _departures_cache.get(gid)
@@ -57,7 +60,7 @@ async def get_departures(
         return cached[1]
 
     try:
-        raw = await request.app.state.vasttrafik.get_departures(gid)
+        raw = await vasttrafik.get_departures(gid)
     except Exception as exc:
         raise HTTPException(status_code=502, detail="Upstream departures request failed") from exc
 

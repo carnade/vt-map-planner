@@ -7,6 +7,7 @@ os.environ.setdefault("VASTTRAFIK_CLIENT_SECRET", "test-secret")
 from fastapi.testclient import TestClient
 
 from app.main import app
+from app.deps import get_vasttrafik
 from app.routers import stops as stops_module
 
 RAW_STOP = {"gid": "9021014001760000", "name": "Brunnsparken", "lat": 57.7068, "long": 11.9672}
@@ -36,13 +37,14 @@ RAW_DEPARTURE = {
 def setup_function():
     stops_module._stops_cache = None
     stops_module._departures_cache.clear()
+    app.dependency_overrides.clear()
 
 
 def test_stops_shapes_and_drops_invalid():
     with TestClient(app) as client:
         mock = AsyncMock()
         mock.get_stop_areas.return_value = [RAW_STOP, {"gid": "x", "name": "No coords"}]
-        app.state.vasttrafik = mock
+        app.dependency_overrides[get_vasttrafik] = lambda: mock
         body = client.get("/api/stops").json()
         assert len(body["stops"]) == 1
         assert body["stops"][0] == {
@@ -57,7 +59,7 @@ def test_stops_cached_after_first_fetch():
     with TestClient(app) as client:
         mock = AsyncMock()
         mock.get_stop_areas.return_value = [RAW_STOP]
-        app.state.vasttrafik = mock
+        app.dependency_overrides[get_vasttrafik] = lambda: mock
         client.get("/api/stops")
         client.get("/api/stops")
         assert mock.get_stop_areas.await_count == 1
@@ -67,7 +69,7 @@ def test_departures_shaped():
     with TestClient(app) as client:
         mock = AsyncMock()
         mock.get_departures.return_value = {"results": [RAW_DEPARTURE]}
-        app.state.vasttrafik = mock
+        app.dependency_overrides[get_vasttrafik] = lambda: mock
         body = client.get("/api/stops/9021014001760000/departures").json()
         assert body["stop_name"] == "Brunnsparken, Göteborg"
         assert body["departures"][0] == {
@@ -89,7 +91,7 @@ def test_departures_cached_per_gid():
     with TestClient(app) as client:
         mock = AsyncMock()
         mock.get_departures.return_value = {"results": []}
-        app.state.vasttrafik = mock
+        app.dependency_overrides[get_vasttrafik] = lambda: mock
         client.get("/api/stops/9021014001760000/departures")
         client.get("/api/stops/9021014001760000/departures")
         client.get("/api/stops/9021014001960000/departures")
@@ -98,5 +100,5 @@ def test_departures_cached_per_gid():
 
 def test_departures_rejects_bad_gid():
     with TestClient(app) as client:
-        app.state.vasttrafik = AsyncMock()
+        app.dependency_overrides[get_vasttrafik] = lambda: AsyncMock()
         assert client.get("/api/stops/not-a-gid/departures").status_code == 422

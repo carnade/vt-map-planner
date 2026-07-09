@@ -76,6 +76,18 @@ client-credentials against `https://ext-api.vasttrafik.se/token`, handled by
 - **Config knobs** live in `frontend/src/config.ts` (poll interval, zoom thresholds,
   trail length, panel breakpoint) and `backend/app/config.py` (cache TTLs).
 
+## Production (Vercel)
+
+Deployed on Vercel Hobby: `api/index.py` is the serverless entrypoint (adds
+`backend/` to sys.path, imports `app.main:app`); `vercel.json` rewrites
+`/api/(.*)` to it and builds the frontend (`frontend/dist` static output).
+Root `requirements.txt` = function runtime deps (keep in sync with
+`backend/requirements.txt`). Env vars (`VASTTRAFIK_CLIENT_ID/SECRET`) are in
+the Vercel dashboard, NOT in the repo. Client construction is lazy via
+`backend/app/deps.py:get_vasttrafik` (no lifespan/app.state — serverless-safe);
+tests override it with `app.dependency_overrides[get_vasttrafik]`. Backend TTL
+caches + OAuth token are per warm instance in prod. Pushes to main auto-deploy.
+
 ## Roadmap
 
 `FUTURE_IMPROVEMENTS.md` at repo root. The trip planner shipped 2026-07-09

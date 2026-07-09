@@ -1,8 +1,11 @@
 import asyncio
 import time
 
-from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Query
 
+from ..config import get_settings
+from ..deps import get_vasttrafik
+from ..vasttrafik.client import VasttrafikClient
 from ..vasttrafik.schemas import PositionsResponse, shape_position
 
 # Reject absurdly large bounding boxes (degrees); Gothenburg metro is ~0.5°
@@ -35,7 +38,6 @@ def _cache_key(
 
 @router.get("/positions", response_model=PositionsResponse)
 async def get_positions(
-    request: Request,
     min_lat: float = Query(ge=-90, le=90),
     min_lon: float = Query(ge=-180, le=180),
     max_lat: float = Query(ge=-90, le=90),
@@ -43,13 +45,14 @@ async def get_positions(
     modes: str | None = Query(default=None, description="Comma-separated transport modes"),
     lines: str | None = Query(default=None, description="Comma-separated line designations"),
     refs: str | None = Query(default=None, description="Comma-separated journey detailsReferences"),
+    vasttrafik: VasttrafikClient = Depends(get_vasttrafik),
 ):
     if max_lat <= min_lat or max_lon <= min_lon:
         raise HTTPException(status_code=400, detail="Invalid bounding box")
     if max_lat - min_lat > MAX_BBOX_SPAN_DEGREES or max_lon - min_lon > MAX_BBOX_SPAN_DEGREES:
         raise HTTPException(status_code=400, detail="Bounding box too large")
 
-    settings = request.app.state.settings
+    settings = get_settings()
     key = _cache_key(min_lat, min_lon, max_lat, max_lon, modes, lines)
     now = time.monotonic()
 
@@ -62,7 +65,7 @@ async def get_positions(
     mode_list = [m.strip() for m in modes.split(",")] if modes else None
     line_list = [l.strip() for l in lines.split(",")] if lines else None
     ref_list = [r.strip() for r in refs.split(",")] if refs else None
-    raw = await request.app.state.vasttrafik.get_positions(
+    raw = await vasttrafik.get_positions(
         min_lat, min_lon, max_lat, max_lon,
         transport_modes=mode_list,
         line_designations=line_list,

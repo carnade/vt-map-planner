@@ -1,0 +1,6 @@
+# Runtime deps for the Vercel Python function (api/index.py) ONLY.
+# Local dev installs backend/requirements.txt (adds uvicorn + pytest) —
+# keep the runtime pins in the two files in sync.
+fastapi>=0.115
+httpx>=0.27
+pydantic-settings>=2.4

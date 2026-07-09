@@ -40,12 +40,19 @@ the user before building.
   drive icon rotation
 - Snap positions to the street/track network instead of straight-line glides
 
-## Deployment
+## Deployment (Vercel Hobby, set up 2026-07-09)
 
-Currently local dev only. Future: pick a host (VPS / Fly.io / Render), HTTPS,
-secrets management, reverse proxy serving the built frontend and `/api` together.
+Deployed on Vercel's free Hobby tier: static Vite build + FastAPI as one Python
+serverless function (`api/index.py` + `vercel.json` rewrite). Env vars live in
+the Vercel dashboard. Caveats: backend TTL caches and the OAuth token are per
+warm function instance (cold start = one extra ~1s token fetch); the Hobby plan
+is personal/non-commercial. A custom domain can be added in the dashboard later.
 
-### Scaling the Västtrafik API usage (required before public deployment)
+### Scaling the Västtrafik API usage (required before a truly public launch)
+
+> ⚠️ The region-wide fetch loop below needs a long-running process and does
+> NOT fit Vercel's serverless model — implementing it means moving the backend
+> to a persistent host (VM/Render/Fly) or a Vercel cron + KV redesign.
 
 Today the backend proxies per client viewport: positions calls scale with the
 number of *unique viewports* (2 s bbox cache dedupes identical views, but 100

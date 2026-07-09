@@ -56,4 +56,24 @@ so no CORS configuration is needed in dev.
 - The UI must stay responsive — everything is built to work on both mobile and
   desktop (touch gestures, safe-area insets, dynamic viewport height).
 
+## Deployment (Vercel)
+
+The repo is set up for Vercel's free Hobby tier: the Vite build is served as
+static files and the FastAPI app runs as a single Python serverless function
+(`api/index.py`, routed via the rewrite in `vercel.json`).
+
+One-time setup:
+
+1. [vercel.com](https://vercel.com) → import the GitHub repo.
+2. Framework preset: **Other** (build command and output dir come from
+   `vercel.json`).
+3. Environment variables (Production + Preview): `VASTTRAFIK_CLIENT_ID` and
+   `VASTTRAFIK_CLIENT_SECRET`. Everything else has working defaults.
+4. Deploy. Pushes to `main` auto-deploy from then on.
+
+Notes: the backend's in-memory caches and OAuth token are per warm function
+instance in production — fine at hobby scale. The function bundle installs
+from the root `requirements.txt` (runtime deps only); local dev keeps using
+`backend/requirements.txt`.
+
 See [FUTURE_IMPROVEMENTS.md](FUTURE_IMPROVEMENTS.md) for the roadmap.

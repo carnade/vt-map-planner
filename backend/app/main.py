@@ -1,35 +1,13 @@
-from contextlib import asynccontextmanager
-
-import httpx
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 
 from .config import get_settings
 from .routers import journeys, positions, stops
-from .vasttrafik.auth import TokenManager
-from .vasttrafik.client import VasttrafikClient
 
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    settings = get_settings()
-    http = httpx.AsyncClient(timeout=10.0)
-    tokens = TokenManager(
-        http,
-        settings.vasttrafik_token_url,
-        settings.vasttrafik_client_id,
-        settings.vasttrafik_client_secret,
-    )
-    app.state.settings = settings
-    app.state.vasttrafik = VasttrafikClient(
-        http, tokens, settings.vasttrafik_api_base_url
-    )
-    yield
-    await http.aclose()
-
-
-app = FastAPI(title="busplanner", lifespan=lifespan)
+# Client construction is lazy (app/deps.py) so the same app runs under both
+# uvicorn and serverless runtimes — no lifespan/app.state involved.
+app = FastAPI(title="busplanner")
 
 app.add_middleware(
     CORSMiddleware,
@@ -37,7 +15,6 @@ app.add_middleware(
     allow_methods=["GET"],
     allow_headers=["*"],
 )
-
 app.add_middleware(GZipMiddleware, minimum_size=1024)
 
 app.include_router(positions.router, prefix="/api")

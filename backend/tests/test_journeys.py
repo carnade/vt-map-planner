@@ -7,6 +7,7 @@ os.environ.setdefault("VASTTRAFIK_CLIENT_SECRET", "test-secret")
 from fastapi.testclient import TestClient
 
 from app.main import app
+from app.deps import get_vasttrafik
 from app.routers import journeys as journeys_module
 from app.vasttrafik.schemas import shape_route
 
@@ -71,6 +72,7 @@ RAW_DETAILS = {
 
 def setup_function():
     journeys_module._route_cache.clear()
+    app.dependency_overrides.clear()
 
 
 def test_locations_search():
@@ -82,7 +84,7 @@ def test_locations_search():
                 {"gid": "x", "name": "No coords"},
             ]
         }
-        app.state.vasttrafik = mock
+        app.dependency_overrides[get_vasttrafik] = lambda: mock
         body = client.get("/api/locations", params={"q": "brunn"}).json()
         assert len(body["locations"]) == 1
         assert body["locations"][0]["name"] == "Brunnsparken"
@@ -92,7 +94,7 @@ def test_journeys_shaped():
     with TestClient(app) as client:
         mock = AsyncMock()
         mock.get_journeys.return_value = {"results": [RAW_JOURNEY]}
-        app.state.vasttrafik = mock
+        app.dependency_overrides[get_vasttrafik] = lambda: mock
         body = client.get(
             "/api/journeys",
             params={"origin_gid": "9021014001760000", "dest_gid": "9021014002530000"},
@@ -110,7 +112,7 @@ def test_journeys_shaped():
 
 def test_journeys_rejects_same_origin_dest():
     with TestClient(app) as client:
-        app.state.vasttrafik = AsyncMock()
+        app.dependency_overrides[get_vasttrafik] = lambda: AsyncMock()
         resp = client.get(
             "/api/journeys",
             params={"origin_gid": "9021014001760000", "dest_gid": "9021014001760000"},
@@ -130,7 +132,7 @@ def test_route_cached_by_reference():
     with TestClient(app) as client:
         mock = AsyncMock()
         mock.get_journey_details.return_value = RAW_DETAILS
-        app.state.vasttrafik = mock
+        app.dependency_overrides[get_vasttrafik] = lambda: mock
         client.get("/api/journeys/ref-abc/route")
         client.get("/api/journeys/ref-abc/route")
         assert mock.get_journey_details.await_count == 1

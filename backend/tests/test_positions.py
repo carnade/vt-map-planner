@@ -8,6 +8,7 @@ os.environ.setdefault("VASTTRAFIK_CLIENT_SECRET", "test-secret")
 from fastapi.testclient import TestClient
 
 from app.main import app
+from app.deps import get_vasttrafik
 from app.routers import positions as positions_module
 
 RAW_POSITION = {
@@ -24,16 +25,9 @@ RAW_POSITION = {
 }
 
 
-def make_client(raw_response):
-    client = TestClient(app)
-    mock = AsyncMock()
-    mock.get_positions.return_value = raw_response
-    app.state.vasttrafik = mock
-    return client, mock
-
-
 def setup_function():
     positions_module._cache.clear()
+    app.dependency_overrides.clear()
 
 
 def test_health():
@@ -45,7 +39,7 @@ def test_positions_shapes_response():
     with TestClient(app) as client:
         mock = AsyncMock()
         mock.get_positions.return_value = [RAW_POSITION, {"latitude": None}]
-        app.state.vasttrafik = mock
+        app.dependency_overrides[get_vasttrafik] = lambda: mock
         resp = client.get(
             "/api/positions",
             params={"min_lat": 57.6, "min_lon": 11.8, "max_lat": 57.8, "max_lon": 12.1},
@@ -68,7 +62,7 @@ def test_positions_shapes_response():
 
 def test_positions_rejects_huge_bbox():
     with TestClient(app) as client:
-        app.state.vasttrafik = AsyncMock()
+        app.dependency_overrides[get_vasttrafik] = lambda: AsyncMock()
         resp = client.get(
             "/api/positions",
             params={"min_lat": 50.0, "min_lon": 5.0, "max_lat": 60.0, "max_lon": 20.0},
@@ -80,7 +74,7 @@ def test_positions_served_from_cache_within_ttl():
     with TestClient(app) as client:
         mock = AsyncMock()
         mock.get_positions.return_value = [RAW_POSITION]
-        app.state.vasttrafik = mock
+        app.dependency_overrides[get_vasttrafik] = lambda: mock
         params = {"min_lat": 57.6, "min_lon": 11.8, "max_lat": 57.8, "max_lon": 12.1}
         client.get("/api/positions", params=params)
         client.get("/api/positions", params=params)
