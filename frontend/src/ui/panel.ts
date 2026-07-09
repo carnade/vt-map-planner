@@ -129,6 +129,10 @@ export class Panel {
     this.peekBar.replaceChildren(el);
   }
 
+  topView(): PanelView | null {
+    return this.stack[this.stack.length - 1] ?? null;
+  }
+
   open(): void {
     if (this.isDesktop) {
       this.setCollapsed(false);

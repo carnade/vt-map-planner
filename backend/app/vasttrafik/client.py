@@ -21,6 +21,7 @@ class VasttrafikClient:
         max_lat: float,
         max_lon: float,
         transport_modes: list[str] | None = None,
+        line_designations: list[str] | None = None,
     ) -> list[dict]:
         params: dict = {
             "lowerLeftLat": min_lat,
@@ -31,6 +32,8 @@ class VasttrafikClient:
         }
         if transport_modes:
             params["transportModes"] = transport_modes
+        if line_designations:
+            params["lineDesignations"] = line_designations
         response = await self._request("GET", "/positions", params=params)
         return response.json()
 

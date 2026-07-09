@@ -2,10 +2,36 @@ import type maplibregl from "maplibre-gl";
 import type { GeoJSONSource } from "maplibre-gl";
 import { fetchStops } from "../api/stops";
 import { STOP_MIN_ZOOM } from "../config";
+import type { Stop } from "../types/stop";
 import { VEHICLE_LAYER_ID } from "./vehicleLayer";
 
 export const STOP_SOURCE_ID = "stops";
 export const STOP_LAYER_ID = "stops-layer";
+
+let loadedStops: Stop[] = [];
+
+/** Nearest loaded stop to a point, or null if none within maxMeters */
+export function nearestStop(
+  lat: number,
+  lon: number,
+  maxMeters = 400,
+): Stop | null {
+  let best: Stop | null = null;
+  let bestDist = Infinity;
+  // Approximate meters-per-degree at Gothenburg's latitude
+  const latScale = 111_320;
+  const lonScale = 111_320 * Math.cos((lat * Math.PI) / 180);
+  for (const stop of loadedStops) {
+    const dLat = (stop.lat - lat) * latScale;
+    const dLon = (stop.lon - lon) * lonScale;
+    const dist = dLat * dLat + dLon * dLon;
+    if (dist < bestDist) {
+      best = stop;
+      bestDist = dist;
+    }
+  }
+  return best !== null && Math.sqrt(bestDist) <= maxMeters ? best : null;
+}
 
 export function addStopLayers(map: maplibregl.Map): void {
   map.addSource(STOP_SOURCE_ID, {
@@ -34,6 +60,7 @@ export function addStopLayers(map: maplibregl.Map): void {
 export async function loadStops(map: maplibregl.Map): Promise<void> {
   try {
     const stops = await fetchStops();
+    loadedStops = stops;
     const source = map.getSource<GeoJSONSource>(STOP_SOURCE_ID);
     if (!source) return;
     source.setData({

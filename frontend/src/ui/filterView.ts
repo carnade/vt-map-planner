@@ -77,12 +77,15 @@ function renderSettings(): string {
     </label>`;
 }
 
-export function createFilterView(): PanelView {
+export function createFilterView(onOpenPlanner: () => void): PanelView {
   const el = document.createElement("div");
   el.className = "filter-view";
 
   function render(): void {
-    el.innerHTML = ALL_MODES.map(renderGroup).join("") + renderSettings();
+    el.innerHTML =
+      `<button class="planner-open">🧭 Planera resa</button>` +
+      ALL_MODES.map(renderGroup).join("") +
+      renderSettings();
   }
 
   el.addEventListener("change", (e) => {
@@ -100,6 +103,10 @@ export function createFilterView(): PanelView {
 
     const button = target.closest("button");
     if (button) {
+      if (button.matches(".planner-open")) {
+        onOpenPlanner();
+        return;
+      }
       const mode = button.dataset.mode as Mode;
       if (button.matches(".line-chip")) {
         const line = button.dataset.line!;

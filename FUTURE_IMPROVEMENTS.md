@@ -11,23 +11,19 @@ free, keyless, no rate limits. If the dark style or reliability proves insuffici
 style gallery (including several dark variants) but requires an API key and has a
 capped free tier.
 
-## Trip / journey planner (next milestone — UX decided with user)
+## Trip planner refinements (core planner shipped 2026-07-09)
 
-Origin → destination search with realtime-aware suggestions.
+The planner (text search + long-press/right-click map picking, journey list,
+route drawing, vehicle focus mode) is implemented. Deferred refinements:
 
-- `GET /v4/journeys` and `GET /v4/journeys/{detailsReference}/details`
-- `GET /v4/locations/by-text` / `by-coordinates` for origin/destination search
-
-Agreed UX (2026-07-08):
-
-- **Input**: text search with autocomplete AND map picking (tap a stop or
-  long-press the map for "from here" / "to here").
-- **Results**: journey alternatives list (departure/arrival, duration, changes,
-  realtime delays); selecting one draws the route on the map with line colors.
-- **Focus mode**: while a route is active, only vehicles relevant to the trip
-  are shown — the positions API supports `lineDesignations` filtering for this.
-- The planner becomes another view pushed onto the existing panel stack
-  (`frontend/src/ui/panel.ts`).
+- **Departure time picker** — currently always "leave now"; `/v4/journeys`
+  supports `dateTime` + `dateTimeRelatesTo` for leave-at/arrive-by.
+- **Walk legs** — journeys with walking connections show only transit legs;
+  `connectionLinks` in the API has the walk data (could render dashed lines).
+- **"Res härifrån/hit" buttons on the departure board** — today picking is via
+  long-press/right-click and text search only.
+- **Live journey updates** — re-poll the selected journey for delay changes
+  while the route is displayed.
 
 ## Stop search by text
 

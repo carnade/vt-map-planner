@@ -406,6 +406,195 @@ input.switch:checked::after {
   opacity: 0.35;
 }
 
+/* ---------- Trip planner ---------- */
+
+.planner-open {
+  display: block;
+  width: 100%;
+  background: #2a3f5c;
+  border: none;
+  color: #e8eaed;
+  border-radius: 10px;
+  padding: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 12px;
+}
+
+.planner-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative;
+}
+
+.planner-field {
+  position: relative;
+}
+
+.planner-input {
+  width: 100%;
+  box-sizing: border-box;
+  background: #12141a;
+  border: 1px solid #2a2e37;
+  border-radius: 8px;
+  color: #e8eaed;
+  padding: 11px 12px;
+  font-size: 15px;
+}
+
+.planner-input:focus {
+  outline: none;
+  border-color: #4a90d9;
+}
+
+.planner-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 5;
+  background: #23262e;
+  border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+
+.planner-hit {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  color: #e8eaed;
+  padding: 11px 12px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.planner-hit:hover {
+  background: #2a2e37;
+}
+
+.planner-swap {
+  align-self: flex-end;
+  background: #2a2e37;
+  border: none;
+  color: #e8eaed;
+  border-radius: 8px;
+  width: 36px;
+  height: 30px;
+  font-size: 15px;
+  cursor: pointer;
+  margin: -2px 0;
+}
+
+.planner-hint {
+  color: #6b7075;
+  font-size: 11px;
+  margin: 8px 0 12px;
+}
+
+.journey-card {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: #23262e;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  color: #e8eaed;
+  padding: 11px 12px;
+  margin-bottom: 8px;
+  cursor: pointer;
+}
+
+.journey-card-selected {
+  border-color: #4a90d9;
+  background: #253044;
+}
+
+.journey-card-cancelled {
+  opacity: 0.6;
+}
+
+.journey-times {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+
+.journey-arrow {
+  color: #6b7075;
+}
+
+.journey-duration {
+  margin-left: auto;
+  color: #9aa0a6;
+  font-size: 13px;
+}
+
+.journey-legs {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 8px 0 5px;
+}
+
+.journey-leg-badge {
+  font-size: 12px;
+  padding: 2px 8px;
+}
+
+.journey-leg-arrow {
+  color: #6b7075;
+}
+
+.journey-meta {
+  color: #9aa0a6;
+  font-size: 12px;
+}
+
+.planner-clear {
+  display: block;
+  width: 100%;
+  background: #2a2e37;
+  border: none;
+  color: #e8eaed;
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 14px;
+  cursor: pointer;
+  margin-top: 4px;
+}
+
+/* Long-press "from here / to here" chooser */
+.pick-chooser-name {
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.pick-chooser-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.pick-from,
+.pick-to {
+  flex: 1;
+  background: #2a3f5c;
+  border: none;
+  color: #e8eaed;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
 /* Cap warning pill */
 #cap-warning {
   position: fixed;

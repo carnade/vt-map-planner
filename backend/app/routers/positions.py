@@ -15,7 +15,12 @@ _cache_lock = asyncio.Lock()
 
 
 def _cache_key(
-    min_lat: float, min_lon: float, max_lat: float, max_lon: float, modes: str | None
+    min_lat: float,
+    min_lon: float,
+    max_lat: float,
+    max_lon: float,
+    modes: str | None,
+    lines: str | None,
 ) -> tuple:
     # Round so tiny viewport jitter between tabs still hits the same entry
     return (
@@ -24,6 +29,7 @@ def _cache_key(
         round(max_lat, 3),
         round(max_lon, 3),
         modes,
+        lines,
     )
 
 
@@ -35,6 +41,7 @@ async def get_positions(
     max_lat: float = Query(ge=-90, le=90),
     max_lon: float = Query(ge=-180, le=180),
     modes: str | None = Query(default=None, description="Comma-separated transport modes"),
+    lines: str | None = Query(default=None, description="Comma-separated line designations"),
 ):
     if max_lat <= min_lat or max_lon <= min_lon:
         raise HTTPException(status_code=400, detail="Invalid bounding box")
@@ -42,7 +49,7 @@ async def get_positions(
         raise HTTPException(status_code=400, detail="Bounding box too large")
 
     settings = request.app.state.settings
-    key = _cache_key(min_lat, min_lon, max_lat, max_lon, modes)
+    key = _cache_key(min_lat, min_lon, max_lat, max_lon, modes, lines)
     now = time.monotonic()
 
     cached = _cache.get(key)
@@ -50,8 +57,11 @@ async def get_positions(
         return cached[1]
 
     mode_list = [m.strip() for m in modes.split(",")] if modes else None
+    line_list = [l.strip() for l in lines.split(",")] if lines else None
     raw = await request.app.state.vasttrafik.get_positions(
-        min_lat, min_lon, max_lat, max_lon, transport_modes=mode_list
+        min_lat, min_lon, max_lat, max_lon,
+        transport_modes=mode_list,
+        line_designations=line_list,
     )
     vehicles = [v for v in (shape_position(item) for item in raw) if v is not None]
     result = PositionsResponse(vehicles=vehicles, fetched_at=time.time())

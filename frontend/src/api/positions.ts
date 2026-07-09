@@ -12,6 +12,7 @@ export const ALL_TRANSPORT_MODES = ["tram", "bus", "ferry", "train", "taxi"];
 export async function fetchPositions(
   bbox: Bbox,
   modes: string[],
+  lines?: string[],
   signal?: AbortSignal,
 ): Promise<Vehicle[]> {
   const params = new URLSearchParams({
@@ -22,6 +23,9 @@ export async function fetchPositions(
   });
   if (modes.length < ALL_TRANSPORT_MODES.length) {
     params.set("modes", modes.join(","));
+  }
+  if (lines && lines.length > 0) {
+    params.set("lines", lines.join(","));
   }
   const response = await fetch(`/api/positions?${params}`, { signal });
   if (!response.ok) {

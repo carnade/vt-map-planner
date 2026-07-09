@@ -1,5 +1,9 @@
 import type maplibregl from "maplibre-gl";
-import { fetchPositions, type Bbox } from "../api/positions";
+import {
+  ALL_TRANSPORT_MODES,
+  fetchPositions,
+  type Bbox,
+} from "../api/positions";
 import { BUS_MIN_ZOOM, POLL_INTERVAL_MS, VEHICLE_CAP } from "../config";
 import {
   getEnabledModes,
@@ -8,6 +12,12 @@ import {
   subscribeFilters,
   vehiclePassesFilter,
 } from "../state/filterState";
+import {
+  getActiveLines,
+  isFocusActive,
+  subscribeRoute,
+  vehicleOnRoute,
+} from "../state/routeState";
 import { setCapWarningVisible } from "../ui/capWarning";
 import type { VehicleAnimator } from "./vehicleAnimator";
 
@@ -41,9 +51,14 @@ export function startPolling(
     const controller = new AbortController();
     inFlight = controller;
     const requestId = ++requestCounter;
+    // Focus mode: an active planned route overrides the mode/line filters —
+    // show exactly the route's lines, nothing else
+    const focus = isFocusActive();
     const includeBuses =
       !isHideBusesOnZoomOut() || map.getZoom() >= BUS_MIN_ZOOM;
-    const modes = getEnabledModes().filter((m) => m !== "bus" || includeBuses);
+    const modes = focus
+      ? [...ALL_TRANSPORT_MODES]
+      : getEnabledModes().filter((m) => m !== "bus" || includeBuses);
     if (modes.length === 0) {
       animator.removeWhere(() => true);
       setCapWarningVisible(false);
@@ -53,18 +68,21 @@ export function startPolling(
       const vehicles = await fetchPositions(
         currentBbox(map),
         modes,
+        focus ? getActiveLines() : undefined,
         controller.signal,
       );
       // Ignore stale responses that finished after a newer request
       if (requestId === requestCounter) {
-        if (busesShown && !includeBuses) {
+        if (busesShown && !includeBuses && !focus) {
           animator.removeWhere((v) => v.mode === "bus");
         }
         busesShown = includeBuses;
         // Record every line we've seen (even filtered ones, so the filter
         // panel can list them), but only animate the ones passing the filter
         recordSeen(vehicles);
-        animator.ingest(vehicles.filter(vehiclePassesFilter));
+        animator.ingest(
+          vehicles.filter(focus ? vehicleOnRoute : vehiclePassesFilter),
+        );
         // At the API's response cap some vehicles in view are missing
         setCapWarningVisible(vehicles.length >= VEHICLE_CAP);
       }
@@ -92,7 +110,17 @@ export function startPolling(
   // Filter changes take effect immediately: purge newly hidden vehicles
   // and refetch (mode set may have grown)
   const unsubscribeFilters = subscribeFilters(() => {
-    animator.removeWhere((v) => !vehiclePassesFilter(v));
+    if (!isFocusActive()) {
+      animator.removeWhere((v) => !vehiclePassesFilter(v));
+    }
+    void refresh();
+  });
+
+  // Route focus entering/leaving swaps the whole visible vehicle set
+  const unsubscribeRoute = subscribeRoute(() => {
+    animator.removeWhere((v) =>
+      isFocusActive() ? !vehicleOnRoute(v) : !vehiclePassesFilter(v),
+    );
     void refresh();
   });
 
@@ -104,6 +132,7 @@ export function startPolling(
     map.off("moveend", onMoveEnd);
     document.removeEventListener("visibilitychange", onVisibility);
     unsubscribeFilters();
+    unsubscribeRoute();
     animator.stop();
     inFlight?.abort();
   };

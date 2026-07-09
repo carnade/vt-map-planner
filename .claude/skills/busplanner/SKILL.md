@@ -78,7 +78,8 @@ client-credentials against `https://ext-api.vasttrafik.se/token`, handled by
 
 ## Roadmap
 
-`FUTURE_IMPROVEMENTS.md` at repo root. Next milestone: trip planner — UX already
-agreed with the user and recorded there; re-read it before starting. The trip planner
-must NOT be implemented without consulting that section first. GitHub remote:
-`carnade/vt-map-planner`.
+`FUTURE_IMPROVEMENTS.md` at repo root. The trip planner shipped 2026-07-09
+(`frontend/src/ui/plannerView.ts`, `map/routeLayer.ts`, `map/longPress.ts`,
+`state/routeState.ts`; backend `routers/journeys.py`). Remaining planner
+refinements and other roadmap items are listed in FUTURE_IMPROVEMENTS.md.
+GitHub remote: `carnade/vt-map-planner`.
