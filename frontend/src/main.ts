@@ -9,7 +9,7 @@ import { addVehicleLayers } from "./map/vehicleLayer";
 import { startPolling } from "./map/viewportPoller";
 import { removeCapWarning } from "./ui/capWarning";
 import { createDeparturesView } from "./ui/departuresView";
-import { createFilterView } from "./ui/filterView";
+import { createFilterView, createPeekModeBar } from "./ui/filterView";
 import { Panel } from "./ui/panel";
 
 const container = document.getElementById("map");
@@ -26,6 +26,7 @@ map.on("load", () => {
 
   const panel = new Panel();
   panel.setRoot(createFilterView());
+  panel.setPeekContent(createPeekModeBar());
 
   attachMapClickHandlers(map, (stop) => {
     panel.replaceTop(createDeparturesView(stop));

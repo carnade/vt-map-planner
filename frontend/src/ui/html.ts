@@ -9,3 +9,11 @@ export const MODE_LABELS: Record<string, string> = {
   ferry: "Färja",
   taxi: "Taxi",
 };
+
+export const MODE_ICONS: Record<string, string> = {
+  tram: "🚋",
+  bus: "🚌",
+  train: "🚆",
+  ferry: "⛴️",
+  taxi: "🚕",
+};

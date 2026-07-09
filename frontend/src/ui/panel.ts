@@ -21,6 +21,7 @@ export class Panel {
   private backButton: HTMLButtonElement;
   private content: HTMLElement;
   private handle: HTMLElement;
+  private peekBar: HTMLElement;
   private toggleButton: HTMLButtonElement;
   private stack: PanelView[] = [];
   private isDesktop: boolean;
@@ -36,6 +37,9 @@ export class Panel {
     this.handle = document.createElement("div");
     this.handle.className = "panel-handle";
     this.handle.innerHTML = `<div class="panel-handle-bar"></div>`;
+
+    this.peekBar = document.createElement("div");
+    this.peekBar.className = "panel-peek-bar";
 
     const header = document.createElement("div");
     header.className = "panel-header";
@@ -62,7 +66,7 @@ export class Panel {
     this.content = document.createElement("div");
     this.content.className = "panel-content";
 
-    this.root.append(this.handle, header, this.content);
+    this.root.append(this.handle, this.peekBar, header, this.content);
     document.body.append(this.root);
 
     this.toggleButton = document.createElement("button");
@@ -120,6 +124,11 @@ export class Panel {
     view.onMount?.();
   }
 
+  /** Content shown in the bottom sheet's collapsed (peek) strip on mobile */
+  setPeekContent(el: HTMLElement): void {
+    this.peekBar.replaceChildren(el);
+  }
+
   open(): void {
     if (this.isDesktop) {
       this.setCollapsed(false);
@@ -148,6 +157,7 @@ export class Panel {
     this.root.classList.toggle("panel-sheet", !this.isDesktop);
     if (this.isDesktop) {
       this.root.style.transform = "";
+      this.root.classList.remove("panel-peek");
       this.setCollapsed(this.collapsed);
     } else {
       this.root.classList.remove("panel-collapsed");
@@ -166,6 +176,7 @@ export class Panel {
     const height = SHEET_HEIGHTS[state] * window.innerHeight;
     this.root.style.transition = "transform 0.25s ease-out";
     this.root.style.transform = `translateY(${window.innerHeight - height}px)`;
+    this.root.classList.toggle("panel-peek", state === "peek");
     this.toggleButton.classList.remove("panel-toggle-visible");
   }
 

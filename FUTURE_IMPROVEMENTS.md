@@ -29,6 +29,21 @@ Agreed UX (2026-07-08):
 - The planner becomes another view pushed onto the existing panel stack
   (`frontend/src/ui/panel.ts`).
 
+## Stop search by text
+
+A search box (panel root or above the filter view) to find a stop by name and
+jump to it / open its departure board — the full stop list is already loaded
+client-side via `/api/stops`, so this can be pure client-side fuzzy matching;
+alternatively `/v4/locations/by-text` gives server-side matching including
+addresses. Pairs naturally with the trip planner's autocomplete work.
+
+## Option to hide motion trails
+
+A "Visa spår" toggle in the filter panel's settings section (next to "Dölj
+bussar vid utzoomning"), persisted in localStorage like the other switches —
+just gate the trail feature building in `vehicleAnimator.render()` or hide
+`TRAIL_LAYER_ID` via `setLayoutProperty("visibility")`.
+
 ## Favorites / saved stops or lines
 
 Client-side `localStorage` only — no accounts, no database. Natural fit now that

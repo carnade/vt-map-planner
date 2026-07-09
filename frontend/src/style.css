@@ -226,42 +226,49 @@ body {
 .filter-group-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  min-height: 44px;
-}
-
-.filter-mode-label {
-  display: flex;
-  align-items: center;
   gap: 10px;
-  font-size: 15px;
+  min-height: 48px;
   cursor: pointer;
-  flex: 1;
-  min-height: 44px;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .filter-mode-toggle {
   width: 18px;
   height: 18px;
   accent-color: #4a90d9;
-}
-
-.filter-expand {
-  background: none;
-  border: none;
-  color: #9aa0a6;
-  font-size: 15px;
-  min-width: 44px;
-  min-height: 44px;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 4px;
+  flex-shrink: 0;
 }
 
-.filter-line-count {
+.filter-mode-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.filter-mode-name {
+  font-size: 15px;
+  flex: 1;
+}
+
+.filter-count {
+  color: #6b7075;
   font-size: 12px;
+}
+
+.filter-chevron {
+  color: #9aa0a6;
+  font-size: 14px;
+  width: 18px;
+  text-align: center;
+}
+
+.filter-chip-sublabel {
+  color: #6b7075;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 8px 0 5px;
 }
 
 .filter-lines {
@@ -294,12 +301,15 @@ body {
 .line-chip {
   border: none;
   cursor: pointer;
-  min-width: 40px;
+  min-width: 38px;
   min-height: 30px;
+  font-size: 13px;
 }
 
 .line-chip-disabled {
-  opacity: 0.25;
+  filter: grayscale(1);
+  opacity: 0.4;
+  text-decoration: line-through;
 }
 
 .filter-empty {
@@ -308,10 +318,92 @@ body {
   padding: 4px 0;
 }
 
-.filter-settings {
-  padding: 10px 0;
-  color: #9aa0a6;
+.filter-section-title {
+  color: #6b7075;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 18px 0 4px;
+}
+
+.filter-setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 44px;
   font-size: 14px;
+  color: #c6cad1;
+  cursor: pointer;
+}
+
+/* Toggle switch (checkbox restyled) */
+input.switch {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 38px;
+  height: 22px;
+  border-radius: 11px;
+  background: #3a3f4a;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.15s ease-out;
+  flex-shrink: 0;
+  margin: 0;
+}
+
+input.switch::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #e8eaed;
+  transition: transform 0.15s ease-out;
+}
+
+input.switch:checked {
+  background: #4a90d9;
+}
+
+input.switch:checked::after {
+  transform: translateX(16px);
+}
+
+/* Peek-strip mode toggles (mobile bottom sheet, collapsed state) */
+.panel-peek-bar {
+  display: none;
+}
+
+.panel-sheet.panel-peek .panel-peek-bar {
+  display: block;
+}
+
+.panel-sheet.panel-peek .panel-header {
+  display: none;
+}
+
+.panel-peek-modes {
+  display: flex;
+  justify-content: space-around;
+  padding: 0 16px calc(6px + env(safe-area-inset-bottom));
+}
+
+.peek-mode-btn {
+  background: none;
+  border: none;
+  font-size: 22px;
+  width: 44px;
+  height: 40px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.peek-mode-off {
+  filter: grayscale(1);
+  opacity: 0.35;
 }
 
 /* Cap warning pill */
