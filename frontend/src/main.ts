@@ -5,7 +5,7 @@ import { createMap } from "./map/createMap";
 import { attachLongPressPicker } from "./map/longPress";
 import { attachMapClickHandlers } from "./map/popup";
 import { addRouteLayers } from "./map/routeLayer";
-import { addStopLayers, loadStops } from "./map/stopLayer";
+import { addStopLayers, getStopByGid, loadStops } from "./map/stopLayer";
 import { VehicleAnimator } from "./map/vehicleAnimator";
 import { addVehicleLayers } from "./map/vehicleLayer";
 import { startPolling } from "./map/viewportPoller";
@@ -37,10 +37,7 @@ map.on("load", () => {
     panel.open();
   };
 
-  panel.setRoot(createFilterView(openPlanner));
-  panel.setPeekContent(createPeekModeBar());
-
-  attachMapClickHandlers(map, (stop) => {
+  const openStop = (stop: { gid: string; name: string }) => {
     // Stack on top of the planner (so its route survives); swap out an
     // already-open departure board
     if (panel.topView() === plannerView) {
@@ -49,7 +46,21 @@ map.on("load", () => {
       panel.replaceTop(createDeparturesView(stop));
     }
     panel.open();
-  });
+  };
+
+  panel.setRoot(
+    createFilterView(openPlanner, (stop) => {
+      openStop(stop);
+      // Search/favorites picks also bring the stop into view
+      const match = getStopByGid(stop.gid);
+      if (match) {
+        map.flyTo({ center: [match.lon, match.lat], zoom: 15 });
+      }
+    }),
+  );
+  panel.setPeekContent(createPeekModeBar());
+
+  attachMapClickHandlers(map, openStop);
   attachLongPressPicker(map, openPlanner);
 
   const animator = new VehicleAnimator(map, POLL_INTERVAL_MS);

@@ -1,17 +1,25 @@
+import { searchStops } from "../map/stopLayer";
+import {
+  getFavorites,
+  subscribeFavorites,
+} from "../state/favoritesState";
 import {
   ALL_MODES,
   getSeenLines,
   isHideBusesOnZoomOut,
   isLineEnabled,
   isModeEnabled,
+  isTrailsEnabled,
   setAllLinesEnabled,
   setHideBusesOnZoomOut,
   setLineEnabled,
   setModeEnabled,
+  setTrailsEnabled,
   subscribe,
   type Mode,
   type SeenLine,
 } from "../state/filterState";
+import type { Stop } from "../types/stop";
 import { escapeHtml, MODE_ICONS, MODE_LABELS } from "./html";
 import type { PanelView } from "./panel";
 
@@ -74,16 +82,75 @@ function renderSettings(): string {
       <span>Dölj bussar vid utzoomning</span>
       <input type="checkbox" class="filter-zoom-toggle switch"
         ${isHideBusesOnZoomOut() ? "checked" : ""}>
+    </label>
+    <label class="filter-setting-row">
+      <span>Visa spår efter fordon</span>
+      <input type="checkbox" class="filter-trails-toggle switch"
+        ${isTrailsEnabled() ? "checked" : ""}>
     </label>`;
 }
 
-export function createFilterView(onOpenPlanner: () => void): PanelView {
+function renderFavorites(): string {
+  const favorites = getFavorites();
+  if (!favorites.length) return "";
+  const rows = favorites
+    .map(
+      (f) => `<button class="favorite-row" data-gid="${escapeHtml(f.gid)}"
+        data-name="${escapeHtml(f.name)}">★ ${escapeHtml(f.name)}</button>`,
+    )
+    .join("");
+  return `<div class="filter-section-title">Favoriter</div>${rows}`;
+}
+
+export function createFilterView(
+  onOpenPlanner: () => void,
+  onOpenStop: (stop: { gid: string; name: string }) => void,
+): PanelView {
   const el = document.createElement("div");
   el.className = "filter-view";
 
+  // The search box lives outside the re-rendered list so live updates
+  // (new lines seen, favorites changed) don't steal focus mid-typing
+  const searchWrap = document.createElement("div");
+  searchWrap.className = "stop-search";
+  searchWrap.innerHTML = `
+    <input type="text" class="stop-search-input" placeholder="Sök hållplats…"
+      autocomplete="off">
+    <div class="stop-search-results" hidden></div>`;
+  const searchInput = searchWrap.querySelector<HTMLInputElement>(".stop-search-input")!;
+  const searchResults = searchWrap.querySelector<HTMLElement>(".stop-search-results")!;
+
+  function renderSearchResults(hits: Stop[]): void {
+    searchResults.innerHTML = hits
+      .map(
+        (s) => `<button class="stop-search-hit" data-gid="${escapeHtml(s.gid)}"
+          data-name="${escapeHtml(s.name)}">${escapeHtml(s.name)}</button>`,
+      )
+      .join("");
+    searchResults.hidden = hits.length === 0;
+  }
+
+  searchInput.addEventListener("input", () => {
+    renderSearchResults(searchStops(searchInput.value));
+  });
+  searchResults.addEventListener("click", (e) => {
+    const hit = (e.target as HTMLElement).closest<HTMLElement>(".stop-search-hit");
+    if (!hit) return;
+    searchInput.value = "";
+    searchResults.hidden = true;
+    onOpenStop({ gid: hit.dataset.gid!, name: hit.dataset.name! });
+  });
+  searchInput.addEventListener("blur", () => {
+    setTimeout(() => (searchResults.hidden = true), 200);
+  });
+
+  const listWrap = document.createElement("div");
+  el.append(searchWrap, listWrap);
+
   function render(): void {
-    el.innerHTML =
+    listWrap.innerHTML =
       `<button class="planner-open">🧭 Planera resa</button>` +
+      renderFavorites() +
       ALL_MODES.map(renderGroup).join("") +
       renderSettings();
   }
@@ -94,6 +161,8 @@ export function createFilterView(onOpenPlanner: () => void): PanelView {
       setModeEnabled(target.dataset.mode as Mode, target.checked);
     } else if (target.matches(".filter-zoom-toggle")) {
       setHideBusesOnZoomOut(target.checked);
+    } else if (target.matches(".filter-trails-toggle")) {
+      setTrailsEnabled(target.checked);
     }
   });
   el.addEventListener("click", (e) => {
@@ -105,6 +174,10 @@ export function createFilterView(onOpenPlanner: () => void): PanelView {
     if (button) {
       if (button.matches(".planner-open")) {
         onOpenPlanner();
+        return;
+      }
+      if (button.matches(".favorite-row")) {
+        onOpenStop({ gid: button.dataset.gid!, name: button.dataset.name! });
         return;
       }
       const mode = button.dataset.mode as Mode;
@@ -133,16 +206,20 @@ export function createFilterView(onOpenPlanner: () => void): PanelView {
   });
 
   let unsubscribe: (() => void) | null = null;
+  let unsubscribeFavorites: (() => void) | null = null;
   return {
     el,
     title: "Filter",
     onMount() {
       render();
       unsubscribe = subscribe(render);
+      unsubscribeFavorites = subscribeFavorites(render);
     },
     onUnmount() {
       unsubscribe?.();
       unsubscribe = null;
+      unsubscribeFavorites?.();
+      unsubscribeFavorites = null;
     },
   };
 }

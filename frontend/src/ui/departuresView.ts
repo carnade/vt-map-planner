@@ -1,5 +1,6 @@
 import { fetchDepartures } from "../api/stops";
 import { DEPARTURES_REFRESH_MS } from "../config";
+import { isFavorite, toggleFavorite } from "../state/favoritesState";
 import type { Departure } from "../types/stop";
 import { escapeHtml } from "./html";
 import type { PanelView } from "./panel";
@@ -115,15 +116,28 @@ export function createDeparturesView(stop: {
     );
   }
 
+  function renderFavoriteRow(): string {
+    const starred = isFavorite(stop.gid);
+    return `<button class="dep-favorite ${starred ? "dep-favorite-active" : ""}">
+      ${starred ? "★ Sparad hållplats" : "☆ Spara hållplats"}</button>`;
+  }
+
   function render(stale = false): void {
     el.innerHTML = `
       ${stale ? `<div class="dep-stale">Kunde inte uppdatera — visar senast kända</div>` : ""}
+      ${renderFavoriteRow()}
       ${renderPlatformPills()}
       ${renderRows(visibleDepartures())}
       <div class="dep-caveat">Uppdateras var 30:e sekund</div>`;
   }
 
   el.addEventListener("click", (e) => {
+    const favorite = (e.target as HTMLElement).closest(".dep-favorite");
+    if (favorite) {
+      toggleFavorite({ gid: stop.gid, name: stop.name });
+      render();
+      return;
+    }
     const pill = (e.target as HTMLElement).closest<HTMLElement>(".dep-pill");
     if (!pill) return;
     const platform = pill.dataset.platform!;

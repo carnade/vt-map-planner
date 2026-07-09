@@ -25,26 +25,13 @@ route drawing, vehicle focus mode) is implemented. Deferred refinements:
 - **Live journey updates** — re-poll the selected journey for delay changes
   while the route is displayed.
 
-## Stop search by text
+## Favorite lines (stop favorites shipped 2026-07-09)
 
-A search box (panel root or above the filter view) to find a stop by name and
-jump to it / open its departure board — the full stop list is already loaded
-client-side via `/api/stops`, so this can be pure client-side fuzzy matching;
-alternatively `/v4/locations/by-text` gives server-side matching including
-addresses. Pairs naturally with the trip planner's autocomplete work.
-
-## Option to hide motion trails
-
-A "Visa spår" toggle in the filter panel's settings section (next to "Dölj
-bussar vid utzoomning"), persisted in localStorage like the other switches —
-just gate the trail feature building in `vehicleAnimator.render()` or hide
-`TRAIL_LAYER_ID` via `setLayoutProperty("visibility")`.
-
-## Favorites / saved stops or lines
-
-Client-side `localStorage` only — no accounts, no database. Natural fit now that
-stops and the filter panel exist: a star on the departure board header and/or on
-line chips, plus a favorites section at the top of the filter view.
+Stop favorites are done (star on the departure board, Favoriter section in the
+filter panel, localStorage). Favorite *lines* still need a UX decision: line
+chips are already visibility toggles, so a star needs its own affordance
+(long-press? a separate edit mode? star inside an expanded row?). Decide with
+the user before building.
 
 ## Nicer vehicle rendering
 

@@ -406,6 +406,88 @@ input.switch:checked::after {
   opacity: 0.35;
 }
 
+/* ---------- Stop search & favorites ---------- */
+
+.stop-search {
+  position: relative;
+  margin-bottom: 12px;
+}
+
+.stop-search-input {
+  width: 100%;
+  box-sizing: border-box;
+  background: #12141a;
+  border: 1px solid #2a2e37;
+  border-radius: 8px;
+  color: #e8eaed;
+  padding: 11px 12px;
+  font-size: 15px;
+}
+
+.stop-search-input:focus {
+  outline: none;
+  border-color: #4a90d9;
+}
+
+.stop-search-results {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 5;
+  background: #23262e;
+  border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+
+.stop-search-hit {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  color: #e8eaed;
+  padding: 11px 12px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.stop-search-hit:hover {
+  background: #2a2e37;
+}
+
+.favorite-row {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  color: #e8b339;
+  padding: 10px 2px;
+  font-size: 14px;
+  cursor: pointer;
+  border-bottom: 1px solid #2a2e37;
+}
+
+.dep-favorite {
+  display: block;
+  width: 100%;
+  background: none;
+  border: 1px solid #2a2e37;
+  border-radius: 8px;
+  color: #9aa0a6;
+  padding: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  margin-bottom: 10px;
+}
+
+.dep-favorite-active {
+  color: #e8b339;
+  border-color: #e8b33955;
+}
+
 /* ---------- Trip planner ---------- */
 
 .planner-open {

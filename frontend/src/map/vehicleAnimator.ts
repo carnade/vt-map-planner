@@ -1,6 +1,7 @@
 import type maplibregl from "maplibre-gl";
 import type { GeoJSONSource } from "maplibre-gl";
 import { TRAIL_MAX_POINTS, TRAIL_SAMPLE_MS } from "../config";
+import { isTrailsEnabled } from "../state/filterState";
 import type { Vehicle } from "../types/vehicle";
 import { TRAIL_SOURCE_ID, VEHICLE_SOURCE_ID } from "./vehicleLayer";
 
@@ -146,7 +147,9 @@ export class VehicleAnimator {
         },
       });
 
-      if (now - av.lastTrailSample >= TRAIL_SAMPLE_MS) {
+      if (!isTrailsEnabled()) {
+        if (av.trail.length) av.trail = [];
+      } else if (now - av.lastTrailSample >= TRAIL_SAMPLE_MS) {
         av.trail.push(position);
         av.lastTrailSample = now;
         if (av.trail.length > TRAIL_MAX_POINTS) av.trail.shift();

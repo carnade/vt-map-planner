@@ -10,6 +10,28 @@ export const STOP_LAYER_ID = "stops-layer";
 
 let loadedStops: Stop[] = [];
 
+export function getStopByGid(gid: string): Stop | null {
+  return loadedStops.find((s) => s.gid === gid) ?? null;
+}
+
+/** Case-insensitive stop name search; prefix matches rank first */
+export function searchStops(query: string, limit = 8): Stop[] {
+  const q = query.trim().toLowerCase();
+  if (q.length < 2) return [];
+  const prefix: Stop[] = [];
+  const contains: Stop[] = [];
+  for (const stop of loadedStops) {
+    const name = stop.name.toLowerCase();
+    if (name.startsWith(q)) {
+      prefix.push(stop);
+    } else if (name.includes(q)) {
+      contains.push(stop);
+    }
+    if (prefix.length >= limit) break;
+  }
+  return [...prefix, ...contains].slice(0, limit);
+}
+
 /** Nearest loaded stop to a point, or null if none within maxMeters */
 export function nearestStop(
   lat: number,
