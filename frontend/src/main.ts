@@ -2,8 +2,9 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import "./style.css";
 import { POLL_INTERVAL_MS } from "./config";
 import { createMap } from "./map/createMap";
+import { locateVehicle } from "./api/positions";
 import { attachLongPressPicker } from "./map/longPress";
-import { attachMapClickHandlers } from "./map/popup";
+import { attachMapClickHandlers, showVehiclePopup } from "./map/popup";
 import { addRouteLayers } from "./map/routeLayer";
 import { addStopLayers, getStopByGid, loadStops } from "./map/stopLayer";
 import { VehicleAnimator } from "./map/vehicleAnimator";
@@ -37,13 +38,27 @@ map.on("load", () => {
     panel.open();
   };
 
+  // Timetable row tap: find that exact vehicle and fly to it
+  const onLocateVehicle = async (ref: string): Promise<boolean> => {
+    try {
+      const vehicle = await locateVehicle(ref);
+      if (!vehicle) return false;
+      panel.peek();
+      map.flyTo({ center: [vehicle.lon, vehicle.lat], zoom: 15.5 });
+      showVehiclePopup(map, vehicle, [vehicle.lon, vehicle.lat]);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
   const openStop = (stop: { gid: string; name: string }) => {
     // Stack on top of the planner (so its route survives); swap out an
     // already-open departure board
     if (panel.topView() === plannerView) {
-      panel.push(createDeparturesView(stop));
+      panel.push(createDeparturesView(stop, onLocateVehicle));
     } else {
-      panel.replaceTop(createDeparturesView(stop));
+      panel.replaceTop(createDeparturesView(stop, onLocateVehicle));
     }
     panel.open();
   };

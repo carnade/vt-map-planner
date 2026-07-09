@@ -21,6 +21,7 @@ export interface Departure {
   platform: string | null;
   bg_color: string | null;
   fg_color: string | null;
+  details_reference: string | null;
 }
 
 export interface DeparturesResponse {

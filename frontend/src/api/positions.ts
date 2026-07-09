@@ -34,3 +34,23 @@ export async function fetchPositions(
   const body: PositionsResponse = await response.json();
   return body.vehicles;
 }
+
+// Covers the whole Västtrafik core region for reference lookups
+const REGION_BBOX = { minLat: 57.3, minLon: 11.3, maxLat: 58.4, maxLon: 13.2 };
+
+/** Find one specific vehicle anywhere in the region by its journey reference */
+export async function locateVehicle(ref: string): Promise<Vehicle | null> {
+  const params = new URLSearchParams({
+    min_lat: String(REGION_BBOX.minLat),
+    min_lon: String(REGION_BBOX.minLon),
+    max_lat: String(REGION_BBOX.maxLat),
+    max_lon: String(REGION_BBOX.maxLon),
+    refs: ref,
+  });
+  const response = await fetch(`/api/positions?${params}`);
+  if (!response.ok) {
+    throw new Error(`locate request failed: ${response.status}`);
+  }
+  const body: PositionsResponse = await response.json();
+  return body.vehicles[0] ?? null;
+}

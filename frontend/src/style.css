@@ -743,6 +743,24 @@ input.switch:checked::after {
   opacity: 0.6;
 }
 
+.dep-row-locatable {
+  cursor: pointer;
+}
+
+.dep-row-locatable:hover {
+  background: #23262e;
+}
+
+.dep-row-locating {
+  opacity: 0.6;
+}
+
+.dep-not-on-map {
+  color: #6b7075;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
 .dep-destination {
   flex: 1;
   font-size: 14px;

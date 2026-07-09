@@ -1,5 +1,4 @@
 import maplibregl from "maplibre-gl";
-import type { MapGeoJSONFeature } from "maplibre-gl";
 import { escapeHtml, MODE_LABELS } from "../ui/html";
 import { STOP_LAYER_ID } from "./stopLayer";
 import { VEHICLE_LAYER_ID } from "./vehicleLayer";
@@ -12,8 +11,15 @@ export interface StopClick {
   name: string;
 }
 
-function renderPopup(feature: MapGeoJSONFeature): string {
-  const props = feature.properties;
+interface VehiclePopupProps {
+  line?: unknown;
+  mode?: unknown;
+  destination?: unknown;
+  bg_color?: unknown;
+  fg_color?: unknown;
+}
+
+function renderPopup(props: VehiclePopupProps): string {
   const line = escapeHtml(String(props.line ?? "?"));
   const mode = MODE_LABELS[String(props.mode)] ?? escapeHtml(String(props.mode));
   const destination = props.destination
@@ -30,6 +36,21 @@ function renderPopup(feature: MapGeoJSONFeature): string {
       ${destination ? `<div class="vehicle-destination">mot ${destination}</div>` : ""}
       <div class="vehicle-caveat">Positionen är uppskattad</div>
     </div>`;
+}
+
+export function showVehiclePopup(
+  map: maplibregl.Map,
+  props: VehiclePopupProps,
+  lngLat: [number, number],
+): maplibregl.Popup {
+  return new maplibregl.Popup({
+    closeButton: false,
+    offset: 14,
+    maxWidth: "260px",
+  })
+    .setLngLat(lngLat)
+    .setHTML(renderPopup(props))
+    .addTo(map);
 }
 
 export function attachMapClickHandlers(
@@ -53,14 +74,7 @@ export function attachMapClickHandlers(
     const vehicle = vehicles[0];
     if (vehicle && vehicle.geometry.type === "Point") {
       const [lon, lat] = vehicle.geometry.coordinates;
-      popup = new maplibregl.Popup({
-        closeButton: false,
-        offset: 14,
-        maxWidth: "260px",
-      })
-        .setLngLat([lon, lat])
-        .setHTML(renderPopup(vehicle))
-        .addTo(map);
+      popup = showVehiclePopup(map, vehicle.properties, [lon, lat]);
       return;
     }
 

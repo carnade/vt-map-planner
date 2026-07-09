@@ -55,7 +55,9 @@ function renderRows(departures: Departure[]): string {
     .map((dep) => {
       const bg = dep.bg_color ?? "#4a90d9";
       const fg = dep.fg_color ?? "#ffffff";
-      return `<div class="dep-row ${dep.is_cancelled ? "dep-row-cancelled" : ""}">
+      const locatable = dep.details_reference !== null && !dep.is_cancelled;
+      return `<div class="dep-row ${dep.is_cancelled ? "dep-row-cancelled" : ""} ${locatable ? "dep-row-locatable" : ""}"
+        ${locatable ? `data-ref="${escapeHtml(dep.details_reference!)}"` : ""}>
         <span class="vehicle-line-badge" style="background:${bg};color:${fg}">${escapeHtml(dep.line)}</span>
         <span class="dep-destination">
           ${dep.destination ? escapeHtml(dep.destination) : "–"}
@@ -68,10 +70,10 @@ function renderRows(departures: Departure[]): string {
     .join("");
 }
 
-export function createDeparturesView(stop: {
-  gid: string;
-  name: string;
-}): PanelView {
+export function createDeparturesView(
+  stop: { gid: string; name: string },
+  onLocateVehicle?: (ref: string) => Promise<boolean>,
+): PanelView {
   const el = document.createElement("div");
   el.className = "departures-view";
   el.innerHTML = `<div class="dep-loading">Hämtar avgångar…</div>`;
@@ -136,6 +138,22 @@ export function createDeparturesView(stop: {
     if (favorite) {
       toggleFavorite({ gid: stop.gid, name: stop.name });
       render();
+      return;
+    }
+    const row = (e.target as HTMLElement).closest<HTMLElement>(".dep-row-locatable");
+    if (row && onLocateVehicle) {
+      const ref = row.dataset.ref!;
+      row.classList.add("dep-row-locating");
+      void onLocateVehicle(ref).then((found) => {
+        row.classList.remove("dep-row-locating");
+        if (!found) {
+          row.insertAdjacentHTML(
+            "beforeend",
+            `<span class="dep-not-on-map">Syns inte på kartan ännu</span>`,
+          );
+          setTimeout(() => row.querySelector(".dep-not-on-map")?.remove(), 2500);
+        }
+      });
       return;
     }
     const pill = (e.target as HTMLElement).closest<HTMLElement>(".dep-pill");

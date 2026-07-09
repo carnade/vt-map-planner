@@ -81,6 +81,7 @@ def test_departures_shaped():
             "platform": "E1",
             "bg_color": "#ffff50",
             "fg_color": "#d400a2",
+            "details_reference": "ref1",
         }
 
 

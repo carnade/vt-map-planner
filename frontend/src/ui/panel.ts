@@ -141,6 +141,13 @@ export class Panel {
     }
   }
 
+  /** Collapse the mobile sheet so the map is visible; no-op on desktop */
+  peek(): void {
+    if (!this.isDesktop) {
+      this.setSheetState("peek");
+    }
+  }
+
   destroy(): void {
     for (const v of this.stack) v.onUnmount?.();
     this.root.remove();

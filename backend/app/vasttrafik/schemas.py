@@ -46,6 +46,9 @@ class Departure(BaseModel):
     platform: str | None = None
     bg_color: str | None = None
     fg_color: str | None = None
+    # Same reference the positions endpoint uses — links a departure row to
+    # its live vehicle on the map
+    details_reference: str | None = None
 
 
 class DeparturesResponse(BaseModel):
@@ -247,6 +250,7 @@ def shape_departure(raw: dict) -> Departure | None:
         platform=(raw.get("stopPoint") or {}).get("platform"),
         bg_color=line.get("backgroundColor"),
         fg_color=line.get("foregroundColor"),
+        details_reference=raw.get("detailsReference"),
     )
 
 
