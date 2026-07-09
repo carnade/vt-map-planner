@@ -18,8 +18,13 @@ export const BUS_MIN_ZOOM = 13;
 // request; hitting it means some vehicles in view are silently missing
 export const VEHICLE_CAP = 200;
 
+// Motion trails: one sample per interval, capped — 15 × 1 s ≈ 15 s of tail
+// (needs to span ~a hundred meters to read as a streak at city zoom)
+export const TRAIL_SAMPLE_MS = 1000;
+export const TRAIL_MAX_POINTS = 15;
+
 // Stops fade in at this zoom
-export const STOP_MIN_ZOOM = 14;
+export const STOP_MIN_ZOOM = 13;
 
 export const DEPARTURES_REFRESH_MS = 30_000;
 

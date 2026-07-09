@@ -1,7 +1,8 @@
 import type maplibregl from "maplibre-gl";
 import type { GeoJSONSource } from "maplibre-gl";
+import { TRAIL_MAX_POINTS, TRAIL_SAMPLE_MS } from "../config";
 import type { Vehicle } from "../types/vehicle";
-import { VEHICLE_SOURCE_ID } from "./vehicleLayer";
+import { TRAIL_SOURCE_ID, VEHICLE_SOURCE_ID } from "./vehicleLayer";
 
 interface AnimatedVehicle {
   vehicle: Vehicle;
@@ -13,6 +14,9 @@ interface AnimatedVehicle {
   velocity: [number, number];
   ingestedAt: number;
   lastSeen: number;
+  /** Recent displayed positions, oldest first (the motion trail) */
+  trail: [number, number][];
+  lastTrailSample: number;
 }
 
 // Teleport instead of gliding when a report jumps further than this (~500 m);
@@ -46,6 +50,8 @@ export class VehicleAnimator {
           velocity: [0, 0],
           ingestedAt: now,
           lastSeen: now,
+          trail: [],
+          lastTrailSample: now,
         });
         continue;
       }
@@ -66,6 +72,8 @@ export class VehicleAnimator {
       existing.to = reported;
       existing.ingestedAt = now;
       existing.lastSeen = now;
+      // A teleport would otherwise leave a streak across the map
+      if (jumped) existing.trail = [];
     }
 
     const staleBefore = now - this.intervalMs * STALE_INTERVALS;
@@ -117,17 +125,17 @@ export class VehicleAnimator {
 
   private render(): void {
     const source = this.map.getSource<GeoJSONSource>(VEHICLE_SOURCE_ID);
+    const trailSource = this.map.getSource<GeoJSONSource>(TRAIL_SOURCE_ID);
     if (!source) return;
     const now = performance.now();
     const features: GeoJSON.Feature[] = [];
+    const trailFeatures: GeoJSON.Feature[] = [];
     for (const av of this.vehicles.values()) {
       const v = av.vehicle;
+      const position = this.displayedPosition(av, now);
       features.push({
         type: "Feature",
-        geometry: {
-          type: "Point",
-          coordinates: this.displayedPosition(av, now),
-        },
+        geometry: { type: "Point", coordinates: position },
         properties: {
           id: v.id,
           line: v.line,
@@ -137,7 +145,25 @@ export class VehicleAnimator {
           fg_color: v.fg_color,
         },
       });
+
+      if (now - av.lastTrailSample >= TRAIL_SAMPLE_MS) {
+        av.trail.push(position);
+        av.lastTrailSample = now;
+        if (av.trail.length > TRAIL_MAX_POINTS) av.trail.shift();
+      }
+      if (av.trail.length >= 2) {
+        // The current position closes the trail so it hugs the moving dot
+        trailFeatures.push({
+          type: "Feature",
+          geometry: {
+            type: "LineString",
+            coordinates: [...av.trail, position],
+          },
+          properties: { bg_color: v.bg_color },
+        });
+      }
     }
     source.setData({ type: "FeatureCollection", features });
+    trailSource?.setData({ type: "FeatureCollection", features: trailFeatures });
   }
 }

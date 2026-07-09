@@ -19,7 +19,7 @@ export function addStopLayers(map: maplibregl.Map): void {
       source: STOP_SOURCE_ID,
       minzoom: STOP_MIN_ZOOM,
       paint: {
-        "circle-radius": ["interpolate", ["linear"], ["zoom"], 14, 2.5, 17, 5],
+        "circle-radius": ["interpolate", ["linear"], ["zoom"], 13, 4, 17, 7.5],
         "circle-color": "#8a919c",
         "circle-opacity": 0.8,
         "circle-stroke-width": 1,
